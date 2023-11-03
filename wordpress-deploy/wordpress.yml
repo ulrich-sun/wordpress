@@ -1,0 +1,29 @@
+---
+- name: Deploy WordPress with Docker Compose
+  hosts: prod
+  become: true
+  vars:
+    system_user: admin
+  vars_files:
+    - files/secrets/credentials.yml
+  pre_tasks:
+    - name: Install some package
+      package: name='{{ item }}' state=present
+      when: ansible_distribution == "CentOS"
+      loop:
+        - epel-release
+        - wget
+        - git
+    - name: create www-data
+      user: name=www-data state=present
+  tasks:
+    - name: Copy Docker Compose file
+      copy:
+        src: /home/admin/wordpress/docker-compose.yml
+        dest: /home/admin/docker-compose.yml
+
+    - name: Start WordPress container
+      command:
+        cmd: "docker-compose -f docker-compose.yml up -d"
+      args:
+        chdir: /home/admin
